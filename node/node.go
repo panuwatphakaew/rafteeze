@@ -18,7 +18,7 @@ func NewNode(id, httpAddr string) *Node {
 	storage := raft.NewMemoryStorage()
 
 	cf := &raft.Config{
-		ID:              1, //TODO: start multiple nodes with unique IDs
+		ID:              1, //TODO: Start multiple nodes with unique IDs
 		ElectionTick:    10,
 		HeartbeatTick:   1,
 		Storage:         storage,
@@ -40,7 +40,7 @@ func NewNode(id, httpAddr string) *Node {
 
 func (n *Node) Start() error {
 	for {
-		ready := n.raft.Ready()
+		ready := n.raft.Ready() //TODO: Optimize Ready handling with channels and goroutines
 		for _, entry := range ready.CommittedEntries {
 			if entry.Type == raftpb.EntryNormal && len(entry.Data) > 0 {
 				payload := kv.Payload{}
@@ -51,6 +51,7 @@ func (n *Node) Start() error {
 				n.kv.Put(payload.Key, payload.Value)
 			}
 		}
+		n.raft.Advance(ready)
 	}
 }
 
