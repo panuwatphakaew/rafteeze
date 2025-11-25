@@ -2,6 +2,11 @@ package kv
 
 import "sync"
 
+type Payload struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
 type Store struct {
 	mu   sync.Mutex
 	data map[string]string
