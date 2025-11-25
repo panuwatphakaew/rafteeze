@@ -2,6 +2,8 @@ package node
 
 import (
 	"encoding/json"
+	"log"
+	"time"
 
 	"github.com/coreos/etcd/raft/raftpb"
 	"github.com/panuwatphakaew/rafteeze/kv"
@@ -26,9 +28,9 @@ func NewNode(id, httpAddr string) *Node {
 		MaxInflightMsgs: 256,         //TODO: Use configurable value
 	}
 
-	raftNode, err := raft.NewRawNode(cf, []raft.Peer{{ID: 1}})
+	raftNode, err := raft.NewRawNode(cf, []raft.Peer{{ID: 1}}) //Hardcoded single node for now
 	if err != nil {
-		panic(err)
+		log.Fatal("Failed to create Raft node:", err)
 	}
 
 	return &Node{
@@ -40,18 +42,31 @@ func NewNode(id, httpAddr string) *Node {
 
 func (n *Node) Start() error {
 	for {
-		ready := n.raft.Ready() //TODO: Optimize Ready handling with channels and goroutines
-		for _, entry := range ready.CommittedEntries {
-			if entry.Type == raftpb.EntryNormal && len(entry.Data) > 0 {
-				payload := kv.Payload{}
-				err := json.Unmarshal(entry.Data, &payload)
-				if err != nil {
-					return err
-				}
-				n.kv.Put(payload.Key, payload.Value)
+		if n.raft.HasReady() {
+			ready := n.raft.Ready() //TODO: Optimize Ready handling with channels and goroutines
+
+			if len(ready.Entries) > 0 {
+				// TODO: Persist ready.Entries to disk or other stable storage
 			}
+
+			if len(ready.Messages) > 0 {
+				// TODO: Send ready.Messages to peers via transport
+			}
+
+			for _, entry := range ready.CommittedEntries {
+				if entry.Type == raftpb.EntryNormal && len(entry.Data) > 0 {
+					payload := kv.Payload{}
+					err := json.Unmarshal(entry.Data, &payload)
+					if err != nil {
+						return err
+					}
+					n.kv.Put(payload.Key, payload.Value)
+				}
+			}
+			n.raft.Advance(ready)
+		} else {
+			time.Sleep(10 * time.Millisecond)
 		}
-		n.raft.Advance(ready)
 	}
 }
 
