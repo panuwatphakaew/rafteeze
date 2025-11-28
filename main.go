@@ -10,11 +10,9 @@ import (
 func main() {
 	id := flag.String("id", "1", "node ID")
 	http := flag.String("http", ":8080", "http server address")
-	raft := flag.String("raft", ":12000", "raft server address")
-	join := flag.String("join", "", "existing node to join (for bootstrap)")
 	flag.Parse()
 
-	if err := cmd.RunServer(*id, *http, *raft, *join); err != nil {
+	if err := cmd.RunServer(*id, *http); err != nil {
 		log.Fatal(err)
 	}
 }
