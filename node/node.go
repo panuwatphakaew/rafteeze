@@ -15,7 +15,6 @@ type Node struct {
 	id   string
 	raft *raft.RawNode
 	kv   *kv.Store
-	ready chan struct{}
 }
 
 func NewNode(id, httpAddr string) *Node {
