@@ -2,7 +2,10 @@ module github.com/panuwatphakaew/rafteeze
 
 go 1.25.4
 
-require go.etcd.io/etcd v3.3.27+incompatible
+require (
+	go.etcd.io/etcd v3.3.27+incompatible
+	go.etcd.io/etcd/raft/v3 v3.5.25
+)
 
 require (
 	github.com/coreos/etcd v3.3.27+incompatible // indirect

@@ -3,17 +3,19 @@ package node
 import (
 	"encoding/json"
 	"log"
+	"log/slog"
 	"time"
 
-	"github.com/coreos/etcd/raft/raftpb"
 	"github.com/panuwatphakaew/rafteeze/kv"
-	"go.etcd.io/etcd/raft"
+	"go.etcd.io/etcd/raft/v3"
+	"go.etcd.io/etcd/raft/v3/raftpb"
 )
 
 type Node struct {
 	id   string
 	raft *raft.RawNode
 	kv   *kv.Store
+	ready chan struct{}
 }
 
 func NewNode(id, httpAddr string) *Node {
@@ -28,7 +30,7 @@ func NewNode(id, httpAddr string) *Node {
 		MaxInflightMsgs: 256,         //TODO: Use configurable value
 	}
 
-	raftNode, err := raft.NewRawNode(cf, []raft.Peer{{ID: 1}}) //Hardcoded single node for now
+	raftNode, err := raft.NewRawNode(cf)
 	if err != nil {
 		log.Fatal("Failed to create Raft node:", err)
 	}
@@ -46,7 +48,7 @@ func (n *Node) Start() error {
 			ready := n.raft.Ready() //TODO: Optimize Ready handling with channels and goroutines
 
 			if len(ready.Entries) > 0 {
-				// TODO: Persist ready.Entries to disk or other stable storage
+				// TODO: Persist ready.Entries to disk or other stable storage(snapshot)
 			}
 
 			if len(ready.Messages) > 0 {
@@ -58,7 +60,7 @@ func (n *Node) Start() error {
 					payload := kv.Payload{}
 					err := json.Unmarshal(entry.Data, &payload)
 					if err != nil {
-						return err
+						slog.Error("error process entry", slog.Any("", err))
 					}
 					n.kv.Put(payload.Key, payload.Value)
 				}
