@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package rafteeze.transport;
+
+option go_package = "github.com/panuwatphakaew/rafteeze/proto";
+
+import "raft.proto";
+
+// RaftTransport defines the gRPC service for Raft message exchange
+service RaftTransport {
+  // SendMessage sends a single Raft message to a peer
+  rpc SendMessage(raftpb.Message) returns (SendMessageResponse);
+}
+
+// SendMessageResponse acknowledges receipt of a Raft message
+message SendMessageResponse {
+  bool success = 1;
+  string error = 2; // Optional error message if success = false
+}
